@@ -7,7 +7,7 @@ import { Delivery } from "../models/Delivery.js";
 
 export const AppDataSource = new DataSource({
   type: "postgres",
-  host: process.env.DB_HOST || "postgres",  
+  host: process.env.DB_HOST || "localhost",
   port: 5432,
   username: "postgres",
   password: process.env.DB_PASSWORD || "postgres",

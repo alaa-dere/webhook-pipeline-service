@@ -9,10 +9,8 @@
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
-    "module": "nodenext",
     "target": "esnext",
 "esModuleInterop": true,
-    "skipLibCheck": true,
 
     "types": [],
     // For nodejs:

@@ -7,13 +7,13 @@ export class Pipeline {
   @PrimaryGeneratedColumn()
   id!: number; 
   
-  @Column()
+  @Column({type: "varchar", length: 255})
   name!: string; 
 
-  @Column({ unique: true })
+  @Column({  type: "varchar", length: 500, unique: true })
   source_url!: string; 
 
-  @Column()
+  @Column({type: "varchar", length: 50})
   action_type!: string; 
 
   @OneToMany(() => Subscriber, (sub) => sub.pipeline, { cascade: true })

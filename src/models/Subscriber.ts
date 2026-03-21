@@ -7,7 +7,7 @@ export class Subscriber {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
+  @Column({type: "varchar", length: 500 })
   subscriber_url!: string; 
 
 @ManyToOne(() => Pipeline, (pipeline) => pipeline.subscribers, {
