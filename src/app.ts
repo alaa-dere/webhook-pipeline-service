@@ -2,9 +2,10 @@
 // It initializes the server and sets up the necessary middleware and routes.
 import express from "express";
 import { AppDataSource } from "./db/data-source.js";
-
+import webhookRoutes from "./modules/webhook/routes.js";
 const app = express();
 app.use(express.json());
+app.use(webhookRoutes);
 
 AppDataSource.initialize()
   .then(() => {
