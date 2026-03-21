@@ -12,16 +12,16 @@ job!: Job;
 @ManyToOne(() => Subscriber, (sub) => sub.deliveries, { onDelete: "CASCADE" })
 subscriber!: Subscriber;
 
-  @Column({ default: "pending" })
+  @Column({type: "varchar", default: "pending" })
   status!: string; 
 
-  @Column({ default: 0 })
+  @Column({type: "integer", default: 0 })
   attempt_count!: number;
 
-  @Column({ nullable: true })
+  @Column({type: "timestamp", nullable: true })
   last_attempt!: Date;
 
-  @Column({ nullable: true })
+  @Column({type: "varchar", nullable: true })
   response!: string;
 
   @CreateDateColumn()

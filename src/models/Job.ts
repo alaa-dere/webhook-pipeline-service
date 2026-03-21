@@ -10,7 +10,7 @@ export class Job {
   @Column("jsonb", { nullable: false })
   payload!: Record<string, any>; 
 
-  @Column({ default: "queued" })
+  @Column({type: "varchar", default: "queued" })
   status!: string; 
 
   @ManyToOne(() => Pipeline, (pipeline) => pipeline.jobs, { onDelete: "CASCADE" , nullable: false})
@@ -22,6 +22,6 @@ deliveries!: Delivery[];
   @CreateDateColumn()
   created_at!: Date;
 
-  @Column({ nullable: true })
+  @Column({type: "timestamp", nullable: true })
   processed_at!: Date; 
 }
