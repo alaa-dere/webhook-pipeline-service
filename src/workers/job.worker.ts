@@ -53,38 +53,54 @@ export const startWorker = async () => {
         where: { pipeline: { id: job.pipeline.id } }
       });
 
-      for (const sub of subscribers) {
+    for (const sub of subscribers) {
+  let attempts = 0;
+  let success = false;
+  let lastError = "";
 
+  while (attempts < 3 && !success) {
+    attempts++;
+
+    try {
+      const response = await axios.post(sub.subscriber_url, result);
+
+      const delivery = deliveryRepo.create({
+        job,
+        subscriber: sub,
+        status: "success",
+        attempt_count: attempts,
+        response: JSON.stringify(response.data),
+        last_attempt: new Date()
+      });
+
+      await deliveryRepo.save(delivery);
+
+      console.log(`Success after ${attempts} attempt(s)`);
+
+      success = true;
+
+    } catch (err: any) {
+      lastError = err.message;
+
+      console.log(`Attempt ${attempts} failed for ${sub.subscriber_url}`);
+
+      if (attempts === 3) {
         const delivery = deliveryRepo.create({
           job,
           subscriber: sub,
-          status: "pending",
-          attempt_count: 0
+          status: "failed",
+          attempt_count: attempts,
+          response: lastError,
+          last_attempt: new Date()
         });
 
         await deliveryRepo.save(delivery);
-
-        try {
-          const response = await axios.post(sub.subscriber_url, result);
-
-          delivery.status = "success";
-          delivery.response = JSON.stringify(response.data);
-          delivery.attempt_count = 1;
-          delivery.last_attempt = new Date();
-
-          console.log(`Sent to ${sub.subscriber_url}`);
-
-        } catch (err: any) {
-          delivery.status = "failed";
-          delivery.response = err.message;
-          delivery.attempt_count = 1;
-          delivery.last_attempt = new Date();
-
-          console.log(`Failed to send to ${sub.subscriber_url}`);
-        }
-
-        await deliveryRepo.save(delivery);
+      } else {
+        await new Promise(res => setTimeout(res, 2000));
       }
+    }
+  }
+}
 
       job.status = result === null ? "skipped" : "completed";
       job.processed_at = new Date();
