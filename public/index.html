@@ -141,8 +141,21 @@
 <!-- ───────── Jobs ───────── -->
 <div class="section">
   <h2>Jobs</h2>
-  <button onclick="loadJobs()">Refresh Jobs</button>
-  <pre id="jobs-list"></pre>
+  <button id="refresh-jobs">Refresh Jobs</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Pipeline</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Processed</th>
+        <th>Deliveries</th>
+      </tr>
+    </thead>
+    <tbody id="jobs-body"></tbody>
+  </table>
 </div>
 
 <script>
@@ -291,6 +304,45 @@ async function loadJobs() {
 
 //  Init 
 loadPipelines();
+async function loadJobs() {
+  try {
+    const res = await fetch(`${API_BASE}/jobs`);
+    if (!res.ok) throw new Error(await res.text());
+
+    const jobs = await res.json();
+    const tbody = document.getElementById("jobs-body");
+
+    tbody.innerHTML = "";
+
+    jobs.forEach(job => {
+      const deliveries = job.deliveries?.map(d => {
+        return `${d.subscriber?.subscriber_url} (${d.status})`;
+      }).join("<br>") || "—";
+
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${job.id}</td>
+        <td>${job.pipeline?.name}</td>
+        <td>${job.status}</td>
+        <td>${new Date(job.created_at).toLocaleString()}</td>
+        <td>${job.processed_at ? new Date(job.processed_at).toLocaleString() : "-"}</td>
+        <td>${deliveries}</td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+
+  } catch (err) {
+    document.getElementById("jobs-body").innerHTML =
+      `<tr><td colspan="6" class="error">${err.message}</td></tr>`;
+  }
+}
+
+document.getElementById("refresh-jobs").addEventListener("click", loadJobs);
+
+loadJobs();
+
 
 </script>
 
