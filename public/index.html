@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Webhook Pipeline Tester</title>
+
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 20px;
+      background: #f8f9fa;
+    }
+
+    h1, h2 { color: #2c3e50; }
+
+    .section {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+
+    input, select, textarea, button {
+      padding: 10px;
+      margin: 8px 0;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover { background: #2980b9; }
+
+    pre {
+      background: #ecf0f1;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      direction: ltr;
+    }
+
+    .success { color: #27ae60; }
+    .error   { color: #e74c3c; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: right;
+    }
+
+    th {
+      background: #34495e;
+      color: white;
+    }
+
+    code {
+      background: #eee;
+      padding: 4px 6px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Webhook Pipeline Tester 🚀</h1>
+
+<!-- ───────── Create Pipeline ───────── -->
+<div class="section">
+  <h2>Create Pipeline</h2>
+
+  <form id="create-pipeline-form">
+    <input type="text" id="name" placeholder="Pipeline Name" required />
+
+    <input type="text" id="source_url" placeholder="example: test-123" required />
+
+    <select id="action_type" required>
+      <option value="">Choose Processing Type</option>
+      <option value="uppercase">Uppercase</option>
+      <option value="add_timestamp">Add Timestamp</option>
+      <option value="filter">Filter (>50)</option>
+    </select>
+
+    <button type="submit">Create Pipeline</button>
+  </form>
+
+  <p id="create-result"></p>
+</div>
+
+<!-- ───────── Pipelines List ───────── -->
+<div class="section">
+  <h2>Pipelines</h2>
+
+  <button onclick="loadPipelines()">Refresh</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Webhook URL</th>
+        <th>Action</th>
+        <th>Subscribers</th>
+        <th>Copy</th>
+      </tr>
+    </thead>
+    <tbody id="pipelines-body"></tbody>
+  </table>
+</div>
+
+<!-- ───────── Test Webhook ───────── -->
+<div class="section">
+  <h2>Test Webhook</h2>
+
+  <input type="text" id="test-source" placeholder="example: test-123" />
+
+  <textarea id="test-payload" rows="4">
+{"message": "hello world"}
+  </textarea>
+
+  <button id="send-test-webhook">Send Webhook</button>
+
+  <pre id="test-result"></pre>
+</div>
+
+<!-- ───────── Jobs ───────── -->
+<div class="section">
+  <h2>Jobs</h2>
+  <button onclick="loadJobs()">Refresh Jobs</button>
+  <pre id="jobs-list"></pre>
+</div>
+
+<script>
+const API_BASE = "http://localhost:3000";
+
+
+// ───────── Load Pipelines ─────────
+async function loadPipelines() {
+  const tbody = document.getElementById("pipelines-body");
+  tbody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
+
+  try {
+    const res = await fetch(`${API_BASE}/pipelines`);
+    const data = await res.json();
+
+    tbody.innerHTML = "";
+
+    data.forEach(p => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${p.id}</td>
+        <td>${p.name}</td>
+        <td><code>/webhook/${p.source_url}</code></td>
+        <td>${p.action_type}</td>
+        <td>${p.subscribers?.length || 0}</td>
+        <td>
+          <button onclick="copyUrl('${p.source_url}')">Copy</button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" class="error">${err.message}</td></tr>`;
+  }
+}
+
+
+// ───────── Copy URL ─────────
+function copyUrl(source) {
+  const url = `${API_BASE}/webhook/${source}`;
+  navigator.clipboard.writeText(url);
+  alert("Copied: " + url);
+}
+
+
+//  Create Pipeline 
+document.getElementById("create-pipeline-form")
+.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const name = document.getElementById("name").value.trim();
+  let source_url = document.getElementById("source_url").value.trim();
+  source_url = source_url.replace(/^\/+/, ""); 
+  const action_type = document.getElementById("action_type").value;
+
+  if (!name || !source_url || !action_type) {
+    alert("Fill all fields");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/pipelines`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, source_url, action_type })
+    });
+
+    const data = await res.json();
+
+    document.getElementById("create-result").innerHTML =
+      `<span class="success">Created! ID: ${data.id}</span>`;
+
+    // auto fill test field
+    document.getElementById("test-source").value = source_url;
+
+    loadPipelines();
+
+  } catch (err) {
+    document.getElementById("create-result").innerHTML =
+      `<span class="error">${err.message}</span>`;
+  }
+});
+
+
+//  Send Webhook 
+document.getElementById("send-test-webhook")
+.addEventListener("click", async () => {
+
+  let source = document.getElementById("test-source").value.trim();
+
+  if (!source) {
+    alert("Enter source_url");
+    return;
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(document.getElementById("test-payload").value);
+  } catch {
+    alert("Invalid JSON");
+    return;
+  }
+
+  document.getElementById("test-result").textContent = "Sending...";
+
+  try {
+    const res = await fetch(`${API_BASE}/webhook/${source}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const text = await res.text();
+
+    try {
+      const json = JSON.parse(text);
+      document.getElementById("test-result").textContent =
+        JSON.stringify(json, null, 2);
+    } catch {
+      document.getElementById("test-result").textContent = text;
+    }
+
+  } catch (err) {
+    document.getElementById("test-result").textContent = err.message;
+  }
+});
+
+
+//  Load Jobs 
+async function loadJobs() {
+  try {
+    const res = await fetch(`${API_BASE}/jobs`);
+    const data = await res.json();
+
+    document.getElementById("jobs-list").textContent =
+      JSON.stringify(data, null, 2);
+
+  } catch (err) {
+    document.getElementById("jobs-list").textContent = err.message;
+  }
+}
+
+
+//  Init 
+loadPipelines();
+
+</script>
+
+</body>
+</html>
