@@ -2,7 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, On
 import { Pipeline } from "./Pipeline.js";
 import { Delivery } from "./Delivery.js";
 
-@Entity()
+@Entity("jobs")
 export class Job {
   @PrimaryGeneratedColumn()
   id!: number;

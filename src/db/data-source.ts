@@ -12,7 +12,7 @@ export const AppDataSource = new DataSource({
   username: "postgres",
   password: process.env.DB_PASSWORD || "postgres",
   database: "webhook_db",
-  synchronize: false,
+  synchronize: true,
   logging: false,
   entities: [Pipeline, Subscriber, Job, Delivery],
 });
