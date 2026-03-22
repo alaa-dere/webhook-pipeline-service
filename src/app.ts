@@ -3,7 +3,6 @@
 import express from "express";
 import { AppDataSource } from "./db/data-source.js";
 import webhookRoutes from "./modules/webhook/routes.js";
-import { startWorker } from "./workers/job.worker.js";
 import pipelineRoutes from "./modules/pipeline/routes.js";
 import jobsRoutes from "./modules/jobs/routes.js";
 import deliveryRoutes from "./modules/delivery/routes.js";
@@ -22,7 +21,6 @@ app.use(subscriberRoutes);
 AppDataSource.initialize()
   .then(() => {
     console.log("Data Source has been initialized!");
-    startWorker();
 
     const PORT = 3000;
     app.listen(PORT, () => {

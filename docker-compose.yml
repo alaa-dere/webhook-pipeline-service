@@ -19,5 +19,28 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build: .
+    container_name: webhook_api
+    environment:
+      DB_HOST: postgres
+      DB_PASSWORD: postgres
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  worker:
+    build: .
+    container_name: webhook_worker
+    command: ["npm", "run", "start:worker"]
+    environment:
+      DB_HOST: postgres
+      DB_PASSWORD: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
