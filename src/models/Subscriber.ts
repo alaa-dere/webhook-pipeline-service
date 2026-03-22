@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, OneToMany } from "typeorm";
-import { Pipeline } from "./Pipeline.js";
-import { Delivery } from "./Delivery.js";
+import type { Pipeline } from "./Pipeline.js";
+import type { Delivery } from "./Delivery.js";
 
 @Entity()
 export class Subscriber {
@@ -10,13 +10,13 @@ export class Subscriber {
   @Column({type: "varchar", length: 500 })
   subscriber_url!: string; 
 
-@ManyToOne(() => Pipeline, (pipeline) => pipeline.subscribers, {
+@ManyToOne("Pipeline", (pipeline: Pipeline) => pipeline.subscribers, {
   onDelete: "CASCADE",
   nullable: false,
 })
 pipeline!: Pipeline;
 
-@OneToMany(() => Delivery, (d) => d.subscriber)
+@OneToMany("Delivery", (d: Delivery) => d.subscriber)
 deliveries!: Delivery[];
 
   @CreateDateColumn()

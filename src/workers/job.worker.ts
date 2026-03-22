@@ -32,8 +32,11 @@ export const startWorker = async () => {
   const jobRepo = AppDataSource.getRepository(Job);
   const subscriberRepo = AppDataSource.getRepository(Subscriber);
   const deliveryRepo = AppDataSource.getRepository(Delivery);
+  let isRunning = false;
 
   setInterval(async () => {
+    if (isRunning) return;
+    isRunning = true;
     let currentJob: Job | null = null;
     try {
       const job = await AppDataSource.transaction(async (manager) => {
@@ -42,7 +45,6 @@ export const startWorker = async () => {
           .createQueryBuilder("job")
           .setLock("pessimistic_write")
           .setOnLocked("skip_locked")
-          .leftJoinAndSelect("job.pipeline", "pipeline")
           .where("job.status = :status", { status: "queued" })
           .orderBy("job.id", "ASC")
           .getOne();
@@ -56,10 +58,17 @@ export const startWorker = async () => {
 
       if (!job) return;
 
-      currentJob = job;
+      const jobWithPipeline = await jobRepo.findOne({
+        where: { id: job.id },
+        relations: ["pipeline"]
+      });
+
+      if (!jobWithPipeline) return;
+
+      currentJob = jobWithPipeline;
       console.log(`Processing job #${job.id}`);
 
-      const result = processData(job.payload, job.pipeline.action_type);
+      const result = processData(jobWithPipeline.payload, jobWithPipeline.pipeline.action_type);
 
       if (result === null) {
         job.status = "skipped";
@@ -70,7 +79,7 @@ export const startWorker = async () => {
       }
 
       const subscribers = await subscriberRepo.find({
-        where: { pipeline: { id: job.pipeline.id } }
+        where: { pipeline: { id: jobWithPipeline.pipeline.id } }
       });
 
     for (const sub of subscribers) {
@@ -87,13 +96,13 @@ export const startWorker = async () => {
       });
 
       const delivery = deliveryRepo.create({
-        job,
-        subscriber: sub,
-        status: "success",
-        attempt_count: attempts,
-        response: JSON.stringify(response.data),
-        last_attempt: new Date()
-      });
+          job: jobWithPipeline,
+          subscriber: sub,
+          status: "success",
+          attempt_count: attempts,
+          response: JSON.stringify(response.data),
+          last_attempt: new Date()
+        });
 
       await deliveryRepo.save(delivery);
 
@@ -108,7 +117,7 @@ export const startWorker = async () => {
 
       if (attempts === 3) {
         const delivery = deliveryRepo.create({
-          job,
+          job: jobWithPipeline,
           subscriber: sub,
           status: "failed",
           attempt_count: attempts,
@@ -125,10 +134,10 @@ export const startWorker = async () => {
   }
 }
 
-      job.status = "completed";
-      job.processed_at = new Date();
+      jobWithPipeline.status = "completed";
+      jobWithPipeline.processed_at = new Date();
 
-      await jobRepo.save(job);
+      await jobRepo.save(jobWithPipeline);
 
       console.log(`Job #${job.id} done`);
 
@@ -145,7 +154,8 @@ export const startWorker = async () => {
       } catch (innerErr) {
         console.error("Failed to mark job as failed:", innerErr);
       }
+    } finally {
+      isRunning = false;
     }
-
   }, 5000); //check every 5 seconds
 };

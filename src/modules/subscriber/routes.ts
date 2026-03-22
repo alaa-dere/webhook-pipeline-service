@@ -1,10 +1,11 @@
 import express from "express";
-import { addSubscriber, getSubscribers } from "./controller.js";
+import { addSubscriber, getSubscribers, deleteSubscriber } from "./controller.js";
 
 const router = express.Router();
 
 router.post("/subscribers", addSubscriber);
 
 router.get("/subscribers", getSubscribers);
+router.delete("/subscribers/:id", deleteSubscriber);
 
 export default router;

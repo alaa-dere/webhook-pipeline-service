@@ -43,3 +43,22 @@ export const getSubscribers = async (req: Request, res: Response) => {
     res.status(500).json({ error: err.message });
   }
 };
+
+export const deleteSubscriber = async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ error: "invalid subscriber id" });
+    }
+
+    const repo = AppDataSource.getRepository(Subscriber);
+    const subscriber = await repo.findOneBy({ id });
+    if (!subscriber) return res.status(404).json({ error: "Subscriber not found" });
+
+    await repo.remove(subscriber);
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
