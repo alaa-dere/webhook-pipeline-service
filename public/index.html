@@ -1,350 +1,639 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Webhook Pipeline Tester</title>
+  <title>Webhook Tester · Simple Pipeline</title>
 
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      margin: 20px;
-      background: #f8f9fa;
-    }
-
-    h1, h2 { color: #2c3e50; }
-
-    .section {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-      margin-bottom: 24px;
-    }
-
-    input, select, textarea, button {
-      padding: 10px;
-      margin: 8px 0;
-      font-size: 1rem;
-      width: 100%;
+    * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
     }
 
+    body {
+      background: #f1f4f8;
+      font-family: system-ui, -apple-system, 'Segoe UI', 'Roboto', sans-serif;
+      line-height: 1.5;
+      padding: 2rem 1rem;
+      color: #1e2a3e;
+    }
+
+    .main-wrapper {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .page-header {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .page-header h1 {
+      font-size: 1.85rem;
+      font-weight: 500;
+      background: linear-gradient(135deg, #1f3b4c, #2c5a6e);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      letter-spacing: -0.2px;
+    }
+
+    .page-header p {
+      color: #5b6e7c;
+      margin-top: 0.35rem;
+      font-size: 0.9rem;
+    }
+
+    .two-columns {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: #ffffff;
+      border-radius: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), 0 1px 2px rgba(0, 0, 0, 0.05);
+      padding: 1.25rem 1.5rem;
+      transition: box-shadow 0.2s ease;
+      border: 1px solid #eef2f6;
+    }
+
+    .card:hover {
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.05);
+    }
+
+    .card h2 {
+      font-size: 1.3rem;
+      font-weight: 500;
+      color: #1f3b4c;
+      border-left: 3px solid #7fadc2;
+      padding-left: 0.75rem;
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #4a5f73;
+      margin-top: 0.75rem;
+      margin-bottom: 0.2rem;
+    }
+
+    input, select, textarea, button {
+      font-family: inherit;
+      font-size: 0.9rem;
+      border-radius: 0.75rem;
+      border: 1px solid #dce5ec;
+      background: #ffffff;
+      padding: 0.6rem 0.9rem;
+      width: 100%;
+      transition: 0.2s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #7fadc2;
+      box-shadow: 0 0 0 3px rgba(127, 173, 194, 0.2);
+    }
+
     button {
-      background: #3498db;
-      color: white;
-      border: none;
-      border-radius: 6px;
+      background: #eef3f7;
+      color: #1f4e6e;
+      font-weight: 500;
+      border: 1px solid #cfdee8;
       cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.2s, transform 0.05s;
     }
 
-    button:hover { background: #2980b9; }
+    button:hover {
+      background: #e2eaf1;
+      border-color: #b7cddc;
+    }
 
-    pre {
-      background: #ecf0f1;
-      padding: 12px;
-      border-radius: 6px;
+    button.primary {
+      background: #2c6e8f;
+      border-color: #235b77;
+      color: white;
+    }
+
+    button.primary:hover {
+      background: #235b77;
+    }
+
+    button.small {
+      padding: 0.3rem 0.8rem;
+      font-size: 0.8rem;
+      margin-top: 0;
+      width: auto;
+    }
+
+    .table-responsive {
       overflow-x: auto;
-      direction: ltr;
+      margin-top: 1rem;
+      border-radius: 1rem;
     }
-
-    .success { color: #27ae60; }
-    .error   { color: #e74c3c; }
 
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 12px;
+      font-size: 0.85rem;
     }
 
     th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: right;
+      text-align: left;
+      padding: 0.7rem 0.6rem;
+      border-bottom: 1px solid #e9edf2;
     }
 
     th {
-      background: #34495e;
-      color: white;
+      background: #f8fafc;
+      font-weight: 500;
+      color: #2c5a6e;
+      font-size: 0.8rem;
+    }
+
+    tr:hover td {
+      background-color: #fafcff;
     }
 
     code {
-      background: #eee;
-      padding: 4px 6px;
-      border-radius: 4px;
+      background: #eff3f6;
+      padding: 0.2rem 0.4rem;
+      border-radius: 0.5rem;
+      font-family: 'SF Mono', monospace;
+      font-size: 0.75rem;
+      color: #1f5e7a;
+      word-break: break-all;
+    }
+
+    pre {
+      background: #f8fafc;
+      padding: 0.9rem;
+      border-radius: 0.9rem;
+      overflow-x: auto;
+      font-size: 0.8rem;
+      direction: ltr;
+      text-align: left;
+      border: 1px solid #e9edf2;
+      margin-top: 0.8rem;
+    }
+
+    .status-badge {
+      display: inline-block;
+      background: #eaf5e9;
+      color: #2c6e2f;
+      padding: 0.2rem 0.55rem;
+      border-radius: 2rem;
+      font-size: 0.7rem;
+      font-weight: 500;
+    }
+
+    .status-error {
+      background: #ffe8e6;
+      color: #b13e3e;
+    }
+
+    .status-pending {
+      background: #fff0db;
+      color: #b96816;
+    }
+
+    .message-success {
+      color: #2c6e2f;
+      background: #eef5ea;
+      padding: 0.5rem;
+      border-radius: 0.75rem;
+      margin-top: 0.7rem;
+      font-size: 0.85rem;
+    }
+
+    .message-error {
+      color: #bc4e4e;
+      background: #fff2f0;
+      padding: 0.5rem;
+      border-radius: 0.75rem;
+      margin-top: 0.7rem;
+      font-size: 0.85rem;
+    }
+
+    .inline-copy {
+      background: none;
+      border: none;
+      color: #4a89a8;
+      cursor: pointer;
+      font-size: 0.7rem;
+      padding: 0.2rem 0.5rem;
+      margin: 0;
+      width: auto;
+    }
+
+    .inline-copy:hover {
+      background: #eef2f6;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.7rem;
+      color: #8ca3b5;
+    }
+
+    @media (max-width: 780px) {
+      .two-columns {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      .card {
+        padding: 1rem;
+      }
     }
   </style>
 </head>
-
 <body>
+<div class="main-wrapper">
+  <div class="page-header">
+    <h1> Webhook Pipeline Tester</h1>
+  </div>
 
-<h1>Webhook Pipeline Tester 🚀</h1>
+  <div class="two-columns">
+    <!-- Column 1: Create Pipeline + Subscriber -->
+    <div class="card">
+      <h2> Create Pipeline</h2>
+      <form id="create-pipeline-form">
+        <label>Pipeline Name</label>
+        <input type="text" id="name" placeholder="e.g., Text Transformer" required />
 
-<!-- ───────── Create Pipeline ───────── -->
-<div class="section">
-  <h2>Create Pipeline</h2>
+        <label>Source URL (unique identifier)</label>
+        <input type="text" id="source_url" placeholder="example-123 / my-webhook" required />
+        
+        <label>Processing Type</label>
+        <select id="action_type" required>
+          <option value="">Choose action</option>
+          <option value="uppercase">Uppercase</option>
+          <option value="add_timestamp">Add Timestamp</option>
+          <option value="filter">Filter (value > 50)</option>
+        </select>
 
-  <form id="create-pipeline-form">
-    <input type="text" id="name" placeholder="Pipeline Name" required />
+        <button type="submit" class="primary">Create Pipeline</button>
+        <div id="create-result"></div>
+      </form>
 
-    <input type="text" id="source_url" placeholder="example: test-123" required />
+      <hr style="margin: 1.5rem 0; border-top: 1px solid #eef2f6;" />
 
-    <select id="action_type" required>
-      <option value="">Choose Processing Type</option>
-      <option value="uppercase">Uppercase</option>
-      <option value="add_timestamp">Add Timestamp</option>
-      <option value="filter">Filter (>50)</option>
-    </select>
+      <h2>📎 Add Subscriber</h2>
+      <form id="add-subscriber-form">
+        <label>Pipeline ID</label>
+        <input type="number" id="sub-pipeline-id" placeholder="e.g., 1" required />
+        <label>Destination Webhook URL</label>
+        <input type="text" id="subscriber-url" placeholder="https://example.com/callback" required />
+        <button type="submit">Add Subscriber</button>
+        <div id="subscriber-result"></div>
+      </form>
+    </div>
 
-    <button type="submit">Create Pipeline</button>
-  </form>
+    <!-- Column 2: Pipelines List -->
+    <div class="card">
+      <h2>Pipelines</h2>
+      <div style="display: flex; justify-content: flex-start; margin-bottom: 0.75rem;">
+        <button onclick="loadPipelines()" class="small">⟳ Refresh</button>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Name</th>
+              <th>Webhook URL</th>
+              <th>Action</th>
+              <th>Subscribers</th>
+              <th>Copy</th>
+            </tr>
+          </thead>
+          <tbody id="pipelines-body">
+            <tr><td colspan="6" style="text-align:center;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-  <p id="create-result"></p>
-</div>
+    <!-- Row 2: Test Webhook + Jobs -->
+    <div class="card">
+      <h2> Test Webhook</h2>
+      <label>Source URL</label>
+      <input type="text" id="test-source" placeholder="e.g., example-123" />
+      <label>Payload (JSON)</label>
+      <textarea id="test-payload" rows="3">{"message": "hello world", "value": 88}</textarea>
+      <button id="send-test-webhook" class="primary"> Send Webhook</button>
+      <pre id="test-result" style="font-size:0.75rem;">Response will appear here</pre>
+    </div>
 
-<!-- ───────── Pipelines List ───────── -->
-<div class="section">
-  <h2>Pipelines</h2>
+    <div class="card">
+      <h2> Jobs</h2>
+      <div style="display: flex; justify-content: flex-start; margin-bottom: 0.5rem;">
+        <button id="refresh-jobs" class="small"> Refresh Jobs</button>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pipeline</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Processed</th>
+              <th>Deliveries</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-body">
+            <tr><td colspan="6" style="text-align:center;">No jobs yet</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-  <button onclick="loadPipelines()">Refresh</button>
-
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Webhook URL</th>
-        <th>Action</th>
-        <th>Subscribers</th>
-        <th>Copy</th>
-      </tr>
-    </thead>
-    <tbody id="pipelines-body"></tbody>
-  </table>
-</div>
-
-<!-- ───────── Test Webhook ───────── -->
-<div class="section">
-  <h2>Test Webhook</h2>
-
-  <input type="text" id="test-source" placeholder="example: test-123" />
-
-  <textarea id="test-payload" rows="4">
-{"message": "hello world"}
-  </textarea>
-
-  <button id="send-test-webhook">Send Webhook</button>
-
-  <pre id="test-result"></pre>
-</div>
-
-<!-- ───────── Jobs ───────── -->
-<div class="section">
-  <h2>Jobs</h2>
-  <button id="refresh-jobs">Refresh Jobs</button>
-
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Pipeline</th>
-        <th>Status</th>
-        <th>Created</th>
-        <th>Processed</th>
-        <th>Deliveries</th>
-      </tr>
-    </thead>
-    <tbody id="jobs-body"></tbody>
-  </table>
+    <!-- Deliveries Section -->
+    <div class="card">
+      <h2> Delivery Attempts</h2>
+      <div style="display: flex; justify-content: flex-start; margin-bottom: 0.5rem;">
+        <button id="refresh-deliveries" class="small"> Refresh Deliveries</button>
+      </div>
+      <div class="table-responsive">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Job ID</th>
+              <th>Pipeline</th>
+              <th>Subscriber</th>
+              <th>Status</th>
+              <th>Attempts</th>
+              <th>Last Attempt</th>
+            </tr>
+          </thead>
+          <tbody id="deliveries-body">
+            <tr><td colspan="7" style="text-align:center;">No deliveries recorded</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
-const API_BASE = "http://localhost:3000";
+  const API_BASE = "http://localhost:3000";
 
+  function showMsg(container, text, isError = false) {
+    const div = document.getElementById(container);
+    if (!div) return;
+    div.innerHTML = `<div class="${isError ? 'message-error' : 'message-success'}">${text}</div>`;
+    setTimeout(() => {
+      if (div.innerHTML.includes(text)) div.innerHTML = "";
+    }, 4000);
+  }
 
-// ───────── Load Pipelines ─────────
-async function loadPipelines() {
-  const tbody = document.getElementById("pipelines-body");
-  tbody.innerHTML = "<tr><td colspan='6'>Loading...</td></tr>";
-
-  try {
-    const res = await fetch(`${API_BASE}/pipelines`);
-    const data = await res.json();
-
-    tbody.innerHTML = "";
-
-    data.forEach(p => {
-      const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td>${p.id}</td>
-        <td>${p.name}</td>
-        <td><code>/webhook/${p.source_url}</code></td>
-        <td>${p.action_type}</td>
-        <td>${p.subscribers?.length || 0}</td>
-        <td>
-          <button onclick="copyUrl('${p.source_url}')">Copy</button>
-        </td>
-      `;
-
-      tbody.appendChild(tr);
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      return m;
     });
-
-  } catch (err) {
-    tbody.innerHTML = `<tr><td colspan="6" class="error">${err.message}</td></tr>`;
-  }
-}
-
-
-// ───────── Copy URL ─────────
-function copyUrl(source) {
-  const url = `${API_BASE}/webhook/${source}`;
-  navigator.clipboard.writeText(url);
-  alert("Copied: " + url);
-}
-
-
-//  Create Pipeline 
-document.getElementById("create-pipeline-form")
-.addEventListener("submit", async (e) => {
-  e.preventDefault();
-
-  const name = document.getElementById("name").value.trim();
-  let source_url = document.getElementById("source_url").value.trim();
-  source_url = source_url.replace(/^\/+/, ""); 
-  const action_type = document.getElementById("action_type").value;
-
-  if (!name || !source_url || !action_type) {
-    alert("Fill all fields");
-    return;
   }
 
-  try {
-    const res = await fetch(`${API_BASE}/pipelines`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, source_url, action_type })
-    });
-
-    const data = await res.json();
-
-    document.getElementById("create-result").innerHTML =
-      `<span class="success">Created! ID: ${data.id}</span>`;
-
-    // auto fill test field
-    document.getElementById("test-source").value = source_url;
-
-    loadPipelines();
-
-  } catch (err) {
-    document.getElementById("create-result").innerHTML =
-      `<span class="error">${err.message}</span>`;
-  }
-});
-
-
-//  Send Webhook 
-document.getElementById("send-test-webhook")
-.addEventListener("click", async () => {
-
-  let source = document.getElementById("test-source").value.trim();
-
-  if (!source) {
-    alert("Enter source_url");
-    return;
-  }
-
-  let payload;
-  try {
-    payload = JSON.parse(document.getElementById("test-payload").value);
-  } catch {
-    alert("Invalid JSON");
-    return;
-  }
-
-  document.getElementById("test-result").textContent = "Sending...";
-
-  try {
-    const res = await fetch(`${API_BASE}/webhook/${source}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
-
-    const text = await res.text();
-
+  // Load pipelines
+  async function loadPipelines() {
+    const tbody = document.getElementById("pipelines-body");
+    tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'> Loading...</td></tr>";
     try {
-      const json = JSON.parse(text);
-      document.getElementById("test-result").textContent =
-        JSON.stringify(json, null, 2);
-    } catch {
-      document.getElementById("test-result").textContent = text;
+      const res = await fetch(`${API_BASE}/pipelines`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data.length) {
+        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'> No pipelines yet. Create one.</td></tr>";
+        return;
+      }
+      tbody.innerHTML = "";
+      data.forEach(p => {
+        const tr = document.createElement("tr");
+        const subscriberCount = p.subscribers?.length || 0;
+        tr.innerHTML = `
+          <td style="font-weight:500;">${p.id}</td>
+          <td>${escapeHtml(p.name)}</td>
+          <td><code>/webhook/${escapeHtml(p.source_url)}</code></td>
+          <td>${escapeHtml(p.action_type)}</td>
+          <td style="text-align:center;">${subscriberCount}</td>
+          <td><button class="inline-copy small" data-url="${p.source_url}" onclick="copyUrlFromRow('${p.source_url}')"> Copy</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan='6' class="message-error">Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  window.copyUrlFromRow = function(source) {
+    const fullUrl = `${API_BASE}/webhook/${source}`;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      alert(` Copied: ${fullUrl}`);
+    }).catch(() => alert("Manual copy: " + fullUrl));
+  };
+
+  // Create pipeline
+  const createForm = document.getElementById("create-pipeline-form");
+  createForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = document.getElementById("name").value.trim();
+    let source_url = document.getElementById("source_url").value.trim();
+    source_url = source_url.replace(/^\/+/, "");
+    const action_type = document.getElementById("action_type").value;
+
+    if (!name || !source_url || !action_type) {
+      showMsg("create-result", " Please fill all fields", true);
+      return;
     }
 
-  } catch (err) {
-    document.getElementById("test-result").textContent = err.message;
-  }
-});
+    try {
+      const res = await fetch(`${API_BASE}/pipelines`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, source_url, action_type })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Creation failed");
+      showMsg("create-result", `Created! ID: ${data.id} · source: ${source_url}`);
+      document.getElementById("test-source").value = source_url;
+      loadPipelines();
+      createForm.reset();
+      document.getElementById("name").value = "";
+      document.getElementById("source_url").value = "";
+      document.getElementById("action_type").value = "";
+    } catch (err) {
+      showMsg("create-result", ` ${err.message}`, true);
+    }
+  });
 
+  // Add subscriber
+  const subscriberForm = document.getElementById("add-subscriber-form");
+  subscriberForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const pipeline_id = document.getElementById("sub-pipeline-id").value;
+    const subscriber_url = document.getElementById("subscriber-url").value.trim();
+    if (!pipeline_id || !subscriber_url) {
+      showMsg("subscriber-result", " Pipeline ID and URL are required", true);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/subscribers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pipeline_id: Number(pipeline_id), subscriber_url })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to add subscriber");
+      showMsg("subscriber-result", `📎 Subscriber added to pipeline ${pipeline_id}`);
+      loadPipelines();
+      document.getElementById("sub-pipeline-id").value = "";
+      document.getElementById("subscriber-url").value = "";
+    } catch (err) {
+      showMsg("subscriber-result", ` ${err.message}`, true);
+    }
+  });
 
-//  Load Jobs 
-async function loadJobs() {
-  try {
-    const res = await fetch(`${API_BASE}/jobs`);
-    const data = await res.json();
+  // Send webhook
+  const sendBtn = document.getElementById("send-test-webhook");
+  const testResultPre = document.getElementById("test-result");
 
-    document.getElementById("jobs-list").textContent =
-      JSON.stringify(data, null, 2);
+  sendBtn.addEventListener("click", async () => {
+    let source = document.getElementById("test-source").value.trim();
+    if (!source) {
+      testResultPre.textContent = " Enter a source_url (e.g., test-123)";
+      return;
+    }
+    let payload;
+    try {
+      payload = JSON.parse(document.getElementById("test-payload").value);
+    } catch (err) {
+      testResultPre.textContent = " Invalid JSON: " + err.message;
+      return;
+    }
+    testResultPre.textContent = " Sending...";
+    try {
+      const res = await fetch(`${API_BASE}/webhook/${source}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const responseText = await res.text();
+      let pretty;
+      try {
+        pretty = JSON.stringify(JSON.parse(responseText), null, 2);
+      } catch {
+        pretty = responseText;
+      }
+      testResultPre.textContent = pretty || "(empty response)";
+      loadJobs();
+      loadDeliveries();
+    } catch (err) {
+      testResultPre.textContent = ` Failed: ${err.message}`;
+    }
+  });
 
-  } catch (err) {
-    document.getElementById("jobs-list").textContent = err.message;
-  }
-}
-
-
-//  Init 
-loadPipelines();
-async function loadJobs() {
-  try {
-    const res = await fetch(`${API_BASE}/jobs`);
-    if (!res.ok) throw new Error(await res.text());
-
-    const jobs = await res.json();
+  // Load jobs
+  async function loadJobs() {
     const tbody = document.getElementById("jobs-body");
-
-    tbody.innerHTML = "";
-
-    jobs.forEach(job => {
-      const deliveries = job.deliveries?.map(d => {
-        return `${d.subscriber?.subscriber_url} (${d.status})`;
-      }).join("<br>") || "—";
-
-      const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td>${job.id}</td>
-        <td>${job.pipeline?.name}</td>
-        <td>${job.status}</td>
-        <td>${new Date(job.created_at).toLocaleString()}</td>
-        <td>${job.processed_at ? new Date(job.processed_at).toLocaleString() : "-"}</td>
-        <td>${deliveries}</td>
-      `;
-
-      tbody.appendChild(tr);
-    });
-
-  } catch (err) {
-    document.getElementById("jobs-body").innerHTML =
-      `<tr><td colspan="6" class="error">${err.message}</td></tr>`;
+    tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Loading jobs...</td></tr>";
+    try {
+      const res = await fetch(`${API_BASE}/jobs`);
+      if (!res.ok) throw new Error(await res.text());
+      const jobs = await res.json();
+      if (!jobs.length) {
+        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'> No jobs found</td></tr>";
+        return;
+      }
+      tbody.innerHTML = "";
+      jobs.forEach(job => {
+        const tr = document.createElement("tr");
+        let deliveriesSummary = "—";
+        if (job.deliveries && job.deliveries.length) {
+          deliveriesSummary = job.deliveries.map(d => `${d.subscriber?.subscriber_url?.split('/').pop() || '?'} (${d.status})`).join("<br>");
+        }
+        let statusClass = "status-badge";
+        if (job.status === 'failed') statusClass = "status-badge status-error";
+        else if (job.status === 'pending' || job.status === 'processing') statusClass = "status-badge status-pending";
+        
+        tr.innerHTML = `
+          <td>${job.id}</td>
+          <td>${escapeHtml(job.pipeline?.name || `ID:${job.pipeline_id}`)}</td>
+          <td><span class="${statusClass}">${job.status || 'pending'}</span></td>
+          <td dir="ltr" style="font-size:0.75rem;">${job.created_at ? new Date(job.created_at).toLocaleString() : '-'}</td>
+          <td dir="ltr" style="font-size:0.75rem;">${job.processed_at ? new Date(job.processed_at).toLocaleString() : '-'}</td>
+          <td style="font-size:0.7rem;">${deliveriesSummary}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan='6' class="message-error">Error: ${err.message}</td></tr>`;
+    }
   }
-}
 
-document.getElementById("refresh-jobs").addEventListener("click", loadJobs);
+  // Load deliveries
+  async function loadDeliveries() {
+    const tbody = document.getElementById("deliveries-body");
+    tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>Loading deliveries...</td></tr>";
+    try {
+      const res = await fetch(`${API_BASE}/deliveries`);
+      if (!res.ok) throw new Error(await res.text());
+      const deliveries = await res.json();
+      if (!deliveries.length) {
+        tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>📭 No delivery records</td></tr>";
+        return;
+      }
+      tbody.innerHTML = "";
+      deliveries.forEach(d => {
+        const tr = document.createElement("tr");
+        let statusClass = "status-badge";
+        if (d.status === 'failed') statusClass = "status-badge status-error";
+        else if (d.status === 'pending' || d.status === 'retrying') statusClass = "status-badge status-pending";
+        
+        tr.innerHTML = `
+          <td>${d.id}</td>
+          <td>${d.job?.id || '-'}</td>
+          <td>${escapeHtml(d.job?.pipeline?.name || '-')}</td>
+          <td style="max-width:200px; overflow-x:auto;"><code>${escapeHtml(d.subscriber?.subscriber_url || '-')}</code></td>
+          <td><span class="${statusClass}">${d.status || 'pending'}</span></td>
+          <td>${d.attempt_count ?? 0}</td>
+          <td dir="ltr" style="font-size:0.7rem;">${d.last_attempt ? new Date(d.last_attempt).toLocaleString() : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan='7' class="message-error">Error: ${err.message}</td></tr>`;
+    }
+  }
 
-loadJobs();
+  // Refresh buttons
+  document.getElementById("refresh-jobs").addEventListener("click", () => loadJobs());
+  document.getElementById("refresh-deliveries").addEventListener("click", () => loadDeliveries());
 
+  // Initial load
+  loadPipelines();
+  loadJobs();
+  loadDeliveries();
 
+  // Auto-refresh jobs & deliveries every 12 seconds (optional)
+  let interval = setInterval(() => {
+    if (document.visibilityState === "visible") {
+      loadJobs();
+      loadDeliveries();
+    }
+  }, 12000);
+  window.addEventListener("beforeunload", () => clearInterval(interval));
 </script>
-
 </body>
 </html>

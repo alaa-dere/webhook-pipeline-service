@@ -34,6 +34,7 @@ export const startWorker = async () => {
   const deliveryRepo = AppDataSource.getRepository(Delivery);
 
   setInterval(async () => {
+    let currentJob: Job | null = null;
     try {
       const job = await jobRepo.findOne({
         where: { status: "queued" },
@@ -42,12 +43,22 @@ export const startWorker = async () => {
 
       if (!job) return;
 
+      currentJob = job;
       console.log(`Processing job #${job.id}`);
 
       job.status = "processing";
+      job.error = null;
       await jobRepo.save(job);
 
       const result = processData(job.payload, job.pipeline.action_type);
+
+      if (result === null) {
+        job.status = "skipped";
+        job.processed_at = new Date();
+        await jobRepo.save(job);
+        console.log(`Job #${job.id} skipped`);
+        return;
+      }
 
       const subscribers = await subscriberRepo.find({
         where: { pipeline: { id: job.pipeline.id } }
@@ -102,15 +113,26 @@ export const startWorker = async () => {
   }
 }
 
-      job.status = result === null ? "skipped" : "completed";
+      job.status = "completed";
       job.processed_at = new Date();
 
       await jobRepo.save(job);
 
       console.log(`Job #${job.id} done`);
 
-    } catch (err) {
+    } catch (err: any) {
       console.error("Worker error:", err);
+      try {
+        const message = typeof err?.message === "string" ? err.message : "Worker error";
+        if (currentJob) {
+          currentJob.status = "failed";
+          currentJob.error = message;
+          currentJob.processed_at = new Date();
+          await jobRepo.save(currentJob);
+        }
+      } catch (innerErr) {
+        console.error("Failed to mark job as failed:", innerErr);
+      }
     }
 
   }, 5000); //check every 5 seconds
