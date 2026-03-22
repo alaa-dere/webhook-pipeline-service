@@ -13,6 +13,9 @@ export class Job {
   @Column({type: "varchar", default: "queued" })
   status!: string; 
 
+  @Column({ type: "varchar", length: 1000, nullable: true })
+  error!: string | null;
+
   @ManyToOne(() => Pipeline, (pipeline) => pipeline.jobs, { onDelete: "CASCADE" , nullable: false})
   pipeline!: Pipeline;
 
