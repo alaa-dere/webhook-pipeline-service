@@ -1,6 +1,6 @@
 import { Entity, OneToMany, PrimaryGeneratedColumn, Column, CreateDateColumn } from "typeorm";
-import { Subscriber } from "./Subscriber.js";
-import { Job } from "./Job.js";
+import type { Subscriber } from "./Subscriber.js";
+import type { Job } from "./Job.js";
 
 @Entity()
 export class Pipeline {
@@ -16,10 +16,10 @@ export class Pipeline {
   @Column({type: "varchar", length: 50})
   action_type!: string; 
 
-  @OneToMany(() => Subscriber, (sub) => sub.pipeline, { cascade: true })
+  @OneToMany("Subscriber", (sub: Subscriber) => sub.pipeline, { cascade: true })
   subscribers!: Subscriber[];
 
-  @OneToMany(() => Job, (job) => job.pipeline)
+  @OneToMany("Job", (job: Job) => job.pipeline)
   jobs!: Job[];
 
   @CreateDateColumn()

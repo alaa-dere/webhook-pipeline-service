@@ -133,7 +133,7 @@
     }
 
     .table-responsive {
-      overflow-x: auto;
+      overflow-x: visible;
       margin-top: 1rem;
       border-radius: 1rem;
     }
@@ -142,12 +142,15 @@
       width: 100%;
       border-collapse: collapse;
       font-size: 0.85rem;
+      table-layout: fixed;
     }
 
     th, td {
       text-align: left;
       padding: 0.7rem 0.6rem;
       border-bottom: 1px solid #e9edf2;
+      word-break: break-word;
+      overflow-wrap: anywhere;
     }
 
     th {
@@ -169,6 +172,7 @@
       font-size: 0.75rem;
       color: #1f5e7a;
       word-break: break-all;
+      white-space: normal;
     }
 
     pre {
@@ -289,10 +293,51 @@
       <form id="add-subscriber-form">
         <label>Pipeline ID</label>
         <input type="number" id="sub-pipeline-id" placeholder="e.g., 1" required />
+        <label>Or select pipeline</label>
+        <select id="sub-pipeline-select">
+          <option value="">Choose pipeline</option>
+        </select>
         <label>Destination Webhook URL</label>
         <input type="text" id="subscriber-url" placeholder="https://example.com/callback" required />
         <button type="submit">Add Subscriber</button>
         <div id="subscriber-result"></div>
+      </form>
+
+      <hr style="margin: 1.5rem 0; border-top: 1px solid #eef2f6;" />
+
+      <h2> Update Pipeline</h2>
+      <form id="update-pipeline-form">
+        <label>Pipeline ID</label>
+        <input type="number" id="update-pipeline-id" placeholder="e.g., 1" required />
+        <label>New Name (optional)</label>
+        <input type="text" id="update-pipeline-name" placeholder="New name" />
+        <label>New Source URL (optional)</label>
+        <input type="text" id="update-pipeline-source" placeholder="new-source-id" />
+        <label>New Action Type (optional)</label>
+        <select id="update-pipeline-action">
+          <option value="">(no change)</option>
+          <option value="uppercase">Uppercase</option>
+          <option value="add_timestamp">Add Timestamp</option>
+          <option value="filter">Filter (value > 50)</option>
+        </select>
+        <button type="submit">Update Pipeline</button>
+        <div id="update-result"></div>
+      </form>
+
+      <h2> Delete Pipeline</h2>
+      <form id="delete-pipeline-form">
+        <label>Pipeline ID</label>
+        <input type="number" id="delete-pipeline-id" placeholder="e.g., 1" required />
+        <button type="submit">Delete Pipeline</button>
+        <div id="delete-result"></div>
+      </form>
+
+      <h2> Delete Subscriber</h2>
+      <form id="delete-subscriber-form">
+        <label>Subscriber ID</label>
+        <input type="number" id="delete-subscriber-id" placeholder="e.g., 12" required />
+        <button type="submit">Delete Subscriber</button>
+        <div id="delete-subscriber-result"></div>
       </form>
     </div>
 
@@ -381,6 +426,24 @@
         </table>
       </div>
     </div>
+
+    <div class="card">
+      <h2> Job Lookup</h2>
+      <form id="job-lookup-form">
+        <label>Job ID</label>
+        <input type="number" id="job-lookup-id" placeholder="e.g., 5" required />
+        <button type="submit">Get Job</button>
+        <pre id="job-lookup-result" style="font-size:0.75rem;">Job details will appear here</pre>
+      </form>
+
+      <h2> Deliveries By Job</h2>
+      <form id="job-deliveries-form">
+        <label>Job ID</label>
+        <input type="number" id="job-deliveries-id" placeholder="e.g., 5" required />
+        <button type="submit">Get Deliveries</button>
+        <pre id="job-deliveries-result" style="font-size:0.75rem;">Job deliveries will appear here</pre>
+      </form>
+    </div>
   </div>
 </div>
 
@@ -414,6 +477,16 @@
       const res = await fetch(`${API_BASE}/pipelines`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      const select = document.getElementById("sub-pipeline-select");
+      if (select) {
+        select.innerHTML = `<option value="">Choose pipeline</option>`;
+        data.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = String(p.id);
+          opt.textContent = `${p.id} · ${p.name}`;
+          select.appendChild(opt);
+        });
+      }
       if (!data.length) {
         tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'> No pipelines yet. Create one.</td></tr>";
         return;
@@ -465,7 +538,7 @@
         body: JSON.stringify({ name, source_url, action_type })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Creation failed");
+      if (!res.ok) throw new Error(data.error || data.message || "Creation failed");
       showMsg("create-result", `Created! ID: ${data.id} · source: ${source_url}`);
       document.getElementById("test-source").value = source_url;
       loadPipelines();
@@ -483,8 +556,10 @@
   subscriberForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const pipeline_id = document.getElementById("sub-pipeline-id").value;
+    const selectedId = document.getElementById("sub-pipeline-select").value;
+    const effectivePipelineId = selectedId || pipeline_id;
     const subscriber_url = document.getElementById("subscriber-url").value.trim();
-    if (!pipeline_id || !subscriber_url) {
+    if (!effectivePipelineId || !subscriber_url) {
       showMsg("subscriber-result", " Pipeline ID and URL are required", true);
       return;
     }
@@ -492,13 +567,14 @@
       const res = await fetch(`${API_BASE}/subscribers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pipeline_id: Number(pipeline_id), subscriber_url })
+        body: JSON.stringify({ pipelineId: Number(effectivePipelineId), subscriberUrl: subscriber_url })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to add subscriber");
-      showMsg("subscriber-result", `📎 Subscriber added to pipeline ${pipeline_id}`);
+      if (!res.ok) throw new Error(data.error || data.message || "Failed to add subscriber");
+      showMsg("subscriber-result", `📎 Subscriber added to pipeline ${effectivePipelineId}`);
       loadPipelines();
       document.getElementById("sub-pipeline-id").value = "";
+      document.getElementById("sub-pipeline-select").value = "";
       document.getElementById("subscriber-url").value = "";
     } catch (err) {
       showMsg("subscriber-result", ` ${err.message}`, true);
@@ -620,6 +696,133 @@
   // Refresh buttons
   document.getElementById("refresh-jobs").addEventListener("click", () => loadJobs());
   document.getElementById("refresh-deliveries").addEventListener("click", () => loadDeliveries());
+
+  // Update pipeline
+  const updateForm = document.getElementById("update-pipeline-form");
+  updateForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = Number(document.getElementById("update-pipeline-id").value);
+    const name = document.getElementById("update-pipeline-name").value.trim();
+    let source_url = document.getElementById("update-pipeline-source").value.trim();
+    const action_type = document.getElementById("update-pipeline-action").value;
+
+    if (!Number.isFinite(id)) {
+      showMsg("update-result", "Valid pipeline ID is required", true);
+      return;
+    }
+
+    const payload = {};
+    if (name) payload.name = name;
+    if (source_url) {
+      source_url = source_url.replace(/^\/+/, "");
+      payload.source_url = source_url;
+    }
+    if (action_type) payload.action_type = action_type;
+
+    if (!Object.keys(payload).length) {
+      showMsg("update-result", "Provide at least one field to update", true);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/pipelines/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || "Update failed");
+      showMsg("update-result", `Pipeline ${id} updated`);
+      loadPipelines();
+      updateForm.reset();
+    } catch (err) {
+      showMsg("update-result", ` ${err.message}`, true);
+    }
+  });
+
+  // Delete pipeline
+  const deleteForm = document.getElementById("delete-pipeline-form");
+  deleteForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = Number(document.getElementById("delete-pipeline-id").value);
+    if (!Number.isFinite(id)) {
+      showMsg("delete-result", "Valid pipeline ID is required", true);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/pipelines/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || "Delete failed");
+      showMsg("delete-result", `Pipeline ${id} deleted`);
+      loadPipelines();
+      deleteForm.reset();
+    } catch (err) {
+      showMsg("delete-result", ` ${err.message}`, true);
+    }
+  });
+
+  // Delete subscriber
+  const deleteSubscriberForm = document.getElementById("delete-subscriber-form");
+  deleteSubscriberForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = Number(document.getElementById("delete-subscriber-id").value);
+    if (!Number.isFinite(id)) {
+      showMsg("delete-subscriber-result", "Valid subscriber ID is required", true);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/subscribers/${id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.message || "Delete failed");
+      showMsg("delete-subscriber-result", `Subscriber ${id} deleted`);
+      loadPipelines();
+      deleteSubscriberForm.reset();
+    } catch (err) {
+      showMsg("delete-subscriber-result", ` ${err.message}`, true);
+    }
+  });
+
+  // Job lookup
+  const jobLookupForm = document.getElementById("job-lookup-form");
+  jobLookupForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = Number(document.getElementById("job-lookup-id").value);
+    const output = document.getElementById("job-lookup-result");
+    if (!Number.isFinite(id)) {
+      output.textContent = "Valid job ID is required";
+      return;
+    }
+    output.textContent = "Loading...";
+    try {
+      const res = await fetch(`${API_BASE}/jobs/${id}`);
+      const text = await res.text();
+      if (!res.ok) throw new Error(text || "Request failed");
+      output.textContent = JSON.stringify(JSON.parse(text), null, 2);
+    } catch (err) {
+      output.textContent = `Error: ${err.message}`;
+    }
+  });
+
+  // Job deliveries lookup
+  const jobDeliveriesForm = document.getElementById("job-deliveries-form");
+  jobDeliveriesForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const id = Number(document.getElementById("job-deliveries-id").value);
+    const output = document.getElementById("job-deliveries-result");
+    if (!Number.isFinite(id)) {
+      output.textContent = "Valid job ID is required";
+      return;
+    }
+    output.textContent = "Loading...";
+    try {
+      const res = await fetch(`${API_BASE}/jobs/${id}/deliveries`);
+      const text = await res.text();
+      if (!res.ok) throw new Error(text || "Request failed");
+      output.textContent = JSON.stringify(JSON.parse(text), null, 2);
+    } catch (err) {
+      output.textContent = `Error: ${err.message}`;
+    }
+  });
 
   // Initial load
   loadPipelines();

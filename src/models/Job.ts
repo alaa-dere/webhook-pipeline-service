@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, OneToMany } from "typeorm";
-import { Pipeline } from "./Pipeline.js";
-import { Delivery } from "./Delivery.js";
+import type { Pipeline } from "./Pipeline.js";
+import type { Delivery } from "./Delivery.js";
 
 @Entity("jobs")
 export class Job {
@@ -16,10 +16,10 @@ export class Job {
   @Column({ type: "varchar", length: 1000, nullable: true })
   error!: string | null;
 
-  @ManyToOne(() => Pipeline, (pipeline) => pipeline.jobs, { onDelete: "CASCADE" , nullable: false})
+  @ManyToOne("Pipeline", (pipeline: Pipeline) => pipeline.jobs, { onDelete: "CASCADE" , nullable: false})
   pipeline!: Pipeline;
 
-  @OneToMany(() => Delivery, (d) => d.job)
+  @OneToMany("Delivery", (d: Delivery) => d.job)
 deliveries!: Delivery[];
 
   @CreateDateColumn()

@@ -1,15 +1,15 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn } from "typeorm";
-import { Job } from "./Job.js";
-import { Subscriber } from "./Subscriber.js";
+import type { Job } from "./Job.js";
+import type { Subscriber } from "./Subscriber.js";
 @Entity()
 export class Delivery {
   @PrimaryGeneratedColumn()
   id!: number;
 
-@ManyToOne(() => Job, (job) => job.deliveries, { onDelete: "CASCADE" })
+@ManyToOne("Job", (job: Job) => job.deliveries, { onDelete: "CASCADE" })
 job!: Job;
 
-@ManyToOne(() => Subscriber, (sub) => sub.deliveries, { onDelete: "CASCADE" })
+@ManyToOne("Subscriber", (sub: Subscriber) => sub.deliveries, { onDelete: "CASCADE" })
 subscriber!: Subscriber;
 
   @Column({type: "varchar", default: "pending" })
