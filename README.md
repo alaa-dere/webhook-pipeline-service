@@ -167,3 +167,6 @@ GitHub Actions runs a build on every push and pull request:
 - Worker separated from API for reliability and scaling.
 - JSON payloads stored in `jobs.payload` for flexible processing.
 
+## Author
+
+Alaa Dere
