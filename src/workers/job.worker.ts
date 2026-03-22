@@ -36,19 +36,28 @@ export const startWorker = async () => {
   setInterval(async () => {
     let currentJob: Job | null = null;
     try {
-      const job = await jobRepo.findOne({
-        where: { status: "queued" },
-        relations: ["pipeline"]
+      const job = await AppDataSource.transaction(async (manager) => {
+        const lockedJob = await manager
+          .getRepository(Job)
+          .createQueryBuilder("job")
+          .setLock("pessimistic_write")
+          .setOnLocked("skip_locked")
+          .leftJoinAndSelect("job.pipeline", "pipeline")
+          .where("job.status = :status", { status: "queued" })
+          .orderBy("job.id", "ASC")
+          .getOne();
+
+        if (!lockedJob) return null;
+
+        lockedJob.status = "processing";
+        lockedJob.error = null;
+        return await manager.getRepository(Job).save(lockedJob);
       });
 
       if (!job) return;
 
       currentJob = job;
       console.log(`Processing job #${job.id}`);
-
-      job.status = "processing";
-      job.error = null;
-      await jobRepo.save(job);
 
       const result = processData(job.payload, job.pipeline.action_type);
 
@@ -73,7 +82,9 @@ export const startWorker = async () => {
     attempts++;
 
     try {
-      const response = await axios.post(sub.subscriber_url, result);
+      const response = await axios.post(sub.subscriber_url, result, {
+        timeout: 5000,
+      });
 
       const delivery = deliveryRepo.create({
         job,
@@ -107,7 +118,8 @@ export const startWorker = async () => {
 
         await deliveryRepo.save(delivery);
       } else {
-        await new Promise(res => setTimeout(res, 2000));
+        const backoffMs = 2000 * Math.pow(2, attempts - 1);
+        await new Promise(res => setTimeout(res, backoffMs));
       }
     }
   }
