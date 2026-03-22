@@ -3,9 +3,13 @@ import { webhookService } from "./service.js";
 
 export const handleWebhook = async (req: Request, res: Response) => {
   try {
-    const fullPath = req.path.replace(/^\/webhook\//, "/");
+    const sourceUrl = req.params.sourceUrl; 
 
-    const job = await webhookService.queueWebhook(fullPath, req.body);
+    if (!sourceUrl || typeof sourceUrl !== "string") {
+      return res.status(400).json({ error: "sourceUrl parameter is required" });
+    }
+
+    const job = await webhookService.queueWebhook(sourceUrl, req.body);
 
     return res.status(202).json({
       message: "Webhook accepted and queued",

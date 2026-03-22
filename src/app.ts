@@ -4,9 +4,13 @@ import express from "express";
 import { AppDataSource } from "./db/data-source.js";
 import webhookRoutes from "./modules/webhook/routes.js";
 import { startWorker } from "./workers/job.worker.js";
+import pipelineRoutes from "./modules/pipeline/routes.js";
+
 const app = express();
 app.use(express.json());
+app.use(express.static('public'));
 app.use(webhookRoutes);
+app.use(pipelineRoutes);
 
 AppDataSource.initialize()
   .then(() => {
